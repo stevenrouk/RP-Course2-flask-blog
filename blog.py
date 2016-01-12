@@ -6,6 +6,10 @@ import sqlite3
 
 # configuration
 DATABASE = 'blog.db'
+USERNAME = 'admin'
+PASSWORD = 'admin'
+
+SECRET_KEY = '#[7w4{*G-8WGct-s026i?[Hf8f5R5H'
 
 app = Flask(__name__)
 
@@ -17,9 +21,22 @@ def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
 
 # views
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def login():
-    return render_template('login.html')
+    error = None
+    if request.method == 'POST':
+        if request.form['username'] != app.config['USERNAME'] or request.form['password'] != app.config['PASSWORD']:
+            error = 'Invalid Credentials. Please try again.'
+        else:
+            session['logged_in'] = True
+            return redirect(url_for('main'))
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('You were logged out')
+    return redirect(url_for('login'))
 
 @app.route('/main')
 def main():
