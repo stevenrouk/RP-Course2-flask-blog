@@ -3,12 +3,12 @@
 
 from flask import Flask, render_template, request, session, flash, redirect, url_for, g
 import sqlite3
+from functools import wraps
 
 # configuration
 DATABASE = 'blog.db'
 USERNAME = 'admin'
 PASSWORD = 'admin'
-
 SECRET_KEY = '#[7w4{*G-8WGct-s026i?[Hf8f5R5H'
 
 app = Flask(__name__)
@@ -19,6 +19,17 @@ app.config.from_object(__name__)
 # function used for connecting to the database
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
+
+# login required decorator
+def login_required(test):
+    @wraps(test)
+    def wrap(*args, **kwargs):
+        if 'logged_in' in session:
+            return test(*args, **kwargs)
+        else:
+            flash('You need to login first.')
+            return redirect(url_for('login'))
+    return wrap
 
 # views
 @app.route('/', methods=['GET', 'POST'])
@@ -39,6 +50,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/main')
+@login_required
 def main():
     return render_template('main.html')
 
