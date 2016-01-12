@@ -9,7 +9,7 @@ from functools import wraps
 DATABASE = 'blog.db'
 USERNAME = 'admin'
 PASSWORD = 'admin'
-SECRET_KEY = '#[7w4{*G-8WGct-s026i?[Hf8f5R5H'
+SECRET_KEY = 'my-secret-key'    #not deploying this anywhere, so this doesn't matter
 
 app = Flask(__name__)
 
@@ -57,6 +57,22 @@ def main():
     posts = [dict(title=row[0], post=row[1]) for row in cur.fetchall()]
     g.db.close()
     return render_template('main.html', posts=posts)
+
+@app.route('/add', methods=['POST'])
+@login_required
+def add():
+    title = request.form['title']
+    post = request.form['post']
+    if not title or not post:
+        flash("All fields are required. Please try again.")
+        return redirect(url_for('main'))
+    else:
+        g.db = connect_db()
+        g.db.execute('INSERT INTO posts (title, post) VALUES(?, ?)', [request.form['title'], request.form['post']])
+        g.db.commit()
+        g.db.close()
+        flash('New entry was successfully posted!')
+        return redirect(url_for('main'))
 
 if __name__ == '__main__':
     app.run(debug=True)
